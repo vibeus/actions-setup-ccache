@@ -1,0 +1,37 @@
+name: 'ccache'
+description: 'Setup ccache'
+inputs:
+  task:
+    description: 'task name'
+    required: true
+  cache-size:
+    description: 'size of ccache cache'
+    default: '200M'
+env:
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_COMPILERCHECK: content
+  CCACHE_COMPRESS: true
+- name: Download ccache
+      id: ccache
+      run: |
+        wget https://github.com/cristianadam/ccache/releases/download/v3.7.7/Linux.tar.xz
+        tar xvf Linux.tar.xz
+        sudo cp ccache /usr/bin/
+    - name: Prepare ccache timestamp
+      id: ccache_cache_timestamp
+      shell: cmake -P {0}
+      run: |
+        string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+        message("::set-output name=timestamp::${current_date}")
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
+    - name: ccache cache files
+      uses: actions/cache@v1.1.0
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: wasm-ccache-${{ steps.extract_branch.outputs.branch }}-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+        restore-keys: |
+          ${{ inputs.task }}-ccache-${{ steps.extract_branch.outputs.branch }}-
+          ${{ inputs.task }}-ccache-
