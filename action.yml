@@ -4,14 +4,13 @@ inputs:
   task:
     description: 'task name'
     required: true
-  cache-size:
-    description: 'size of ccache cache'
-    default: '200M'
-env:
-  CCACHE_DIR: ${{ github.workspace }}/.ccache
-  CCACHE_COMPILERCHECK: content
-  CCACHE_COMPRESS: true
-- name: Download ccache
+  cache-dir:
+    description: 'cache-dir'
+    required: true
+runs:
+  using: "composite" 
+  steps:
+    - name: Download ccache
       id: ccache
       run: |
         wget https://github.com/cristianadam/ccache/releases/download/v3.7.7/Linux.tar.xz
@@ -30,7 +29,7 @@ env:
     - name: ccache cache files
       uses: actions/cache@v1.1.0
       with:
-        path: ${{ env.CCACHE_DIR }}
+        path: ${{ inputs.cache-dir }}
         key: wasm-ccache-${{ steps.extract_branch.outputs.branch }}-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
         restore-keys: |
           ${{ inputs.task }}-ccache-${{ steps.extract_branch.outputs.branch }}-
